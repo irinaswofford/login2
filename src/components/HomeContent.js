@@ -1,91 +1,72 @@
 import React, { Component } from 'react';
-import { setPassword, setUserName, setLogin, setUsers } from '../actions/userActions';
+import { setPassword, setUserName, setLogin, setUsers, login, logout, onClickLogin } from '../actions/userActions';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import ModalUi from './Modal';
 import { openModal, closeModal } from '../actions/modalActions';
+import { LOGIN, LOGOUT } from '../actions/action-types/user-actions';
+import { OPEN_MODAL } from '../actions/action-types/modal-actionTypes.js';
+
 class HomeContent extends Component {
+
   constructor(props) {
     super(props);
-    this.loggedIn = this.loggedIn.bind(this);
+
+    // bind
     this.fetchUsers = this.fetchUsers.bind(this);
   };
 
-  componentDidMount() {
-    this.props.setLogin(false);
-    this.fetchUsers()
+
+  async componentDidMount() {
+
+    // start clean- logout
+    this.props.logout();
+    this.props.setUserName("");
+    this.props.setPassword("");
+
+    // fetch Users
+    let users = await this.fetchUsers();
+
+    // set users redux
+    this.props.setUsers(users);
   }
 
+  // fetch Users
   async fetchUsers() {
+
     try {
+      // fetch
       const response = await fetch('db.json');
-      const json = await response.json();
-      let users = json["users"];
-      this.props.setUsers({ data: users })
+
+      // validation
       if (!response.ok) {
+        console.log("unexpected problem with api call fetchUsers");
         throw Error(response.statusText);
       }
-    } catch (error) {
+
+      // un-pack
+      const json = await response.json();
+      let users = json["users"] || [];
+
+      return users;
+    }
+    catch (error) {
       console.log(error);
     }
   }
 
-  loggedIn() {
 
-    // check if already logged in
-    if (this.props.isLoggedIn === true) {
-      // log-out
-      this.props.setLogin(false);
-      return;
-    }
 
-    // bools
-    let weFoundIt = false;
 
-    this.props.users.data.forEach((user, index) => {
-      // un-pack
-      let username = (user["login"]["username"] || "").trim();
-      let password = (user["login"]["password"] || "").trim();
 
-      // work
-      if (this.props.username === username && this.props.password === password) {
-        weFoundIt = true;
-        this.props.setLogin(true);
-        this.props.history.push('/userList');
-        return false;
-      }
-      else if (this.props.username === username && !this.props.password === password) {
-        this.props.openModal({
-          header: <span style={{ color: "green" }}>Password is invalid</span>,
-          body: <span>Please re-enter credentials</span>,
-          buttonLeft: <button onClick={e => this.props.closeModal(e)}>Dismiss</button>
-        });
-      }
-      else if (!this.props.username === username && this.props.password === password) {
-        this.props.openModal({
-          header: <span style={{ color: "green" }}>Username is invalid</span>,
-          body: <span>Please re-enter credentials</span>,
-          buttonLeft: <button onClick={e => this.props.closeModal(e)}>Dismiss</button>
-        });
-      }
-
-    }); // end foreach
-
-    if (!weFoundIt) {
-      /// show alert
-      this.props.setLogin(false);
-      this.props.setIsShowAlert(true);
-      this.props.openModal({
-        header: <span style={{ color: "green" }}>Invalid Credentials</span>,
-        body: <span>Please re-enter credentials</span>,
-        buttonLeft: <button onClick={e => this.props.closeModal(e)}>Dismiss</button>
-      });
-
-    }
-  }
   render() {
+
     return (
+
+
       <div>
+
+
         <div className="container">
           <div style={{ marginBottom: 20, marginTop: 40 }}>
             <label htmlFor="username">Username</label>
@@ -93,14 +74,18 @@ class HomeContent extends Component {
               onInput={event => this.props.setUserName(event.target.value)}
             />
           </div>
+
           <div style={{ marginBottom: 20 }}>
             <label htmlFor="password">Password</label>
             <input type="password" className="form-control" name="password"
               onInput={event => this.props.setPassword(event.target.value)}
             />
           </div>
-          <div className="buttonLookalike" onClick={e => this.loggedIn(e)} style={{ color: 'white' }}>
-            {this.props.setLogin ? "Login" : "Logout"}</div>
+
+          <div className="buttonLookalike"
+            onClick={e => this.props.onClickLogin(this.props.isLoggedIn, this.props.users, this.props.username, this.props.password, (pageUrl) => { this.props.history.push(pageUrl) })}
+            style={{ color: 'white' }}>
+            {this.props.isLoggedIn ? "Logout" : "Login"}</div>
           <ModalUi />
         </div>
       </div>
@@ -110,6 +95,7 @@ class HomeContent extends Component {
 
 
 const mapStateToProps = (state) => {
+
   return {
     username: state.userReducer.username,
     password: state.userReducer.password,
@@ -119,7 +105,9 @@ const mapStateToProps = (state) => {
 }
 
 const mapDispatchToProps = (dispatch) => {
+
   return {
+
     setPassword: (password) => {
       let payloadAction = setPassword(password);
       dispatch(payloadAction);
@@ -136,15 +124,45 @@ const mapDispatchToProps = (dispatch) => {
       let payloadAction = setUsers(users);
       dispatch(payloadAction);
     },
-
     setIsShowAlert: (isShowAlertWrongCredentials) => {
       let payloadAction = setLogin(isShowAlertWrongCredentials);
       dispatch(payloadAction);
     },
+    login: () => {
+      let payloadAction = login();
+      dispatch(payloadAction);
+    },
+    logout: () => {
+      let payloadAction = logout();
+      dispatch(payloadAction);
+    },
+    onClickLogin: (isLoggedIn, users, userInput_username, userInput_password, callback_redirect) => {
+      let payloadAction = onClickLogin(isLoggedIn, users, userInput_username, userInput_password, callback_redirect);
+      dispatch(payloadAction);
+
+      // additional logic
+      if (payloadAction.type === OPEN_MODAL) {
+        dispatch({ type: LOGOUT });
+      }
+      else if (payloadAction.type === LOGIN) {
+        if (typeof payloadAction.callback_redirect === "function") {
+          payloadAction.callback_redirect("/userList");
+        }
+      }
+      else if (payloadAction.type === LOGOUT) {
+        if (typeof payloadAction.callback_redirect === "function") {
+          payloadAction.callback_redirect("/home");
+        }
+      }
+    },
+
     // modal controls
     openModal: (settings) => { dispatch(openModal(settings)) },
     closeModal: (callback) => { dispatch(closeModal(callback)) }
+
+
   }
 }
+
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(HomeContent))

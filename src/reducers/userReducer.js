@@ -3,7 +3,9 @@ import {
     SET_PASSWORD,
     SET_LOGIN,
     SET_SHOW_ALERT,
-    SET_USERS
+    SET_USERS,
+    LOGIN,
+    LOGOUT
 } from '../actions/action-types/user-actions';
 
 // initialState
@@ -12,7 +14,8 @@ const initState = {
     password: '',
     isLoggedIn: false,
     isShowAlertWrongCredentials: false,
-    user: ''
+    users: [],
+    loggedInUser: null
 }
 
 const userReducer = (state = initState, action) => {
@@ -47,6 +50,20 @@ const userReducer = (state = initState, action) => {
         return {
             ...state,
             users: action.users
+        }
+    }
+    else if (action.type === LOGIN) {
+        return {
+            ...state,
+            isLoggedIn: true,
+            loggedInUser: action.loggedInUser
+        }
+    }
+    else if (action.type === LOGOUT) {
+        return {
+            ...state,
+            isLoggedIn: false,
+            loggedInUser: null
         }
     }
     else {

@@ -39,7 +39,7 @@ class ModalUi extends React.Component {
 
                     <Modal.Footer>
 
-                        {this.props.modal.buttonLeft !== null ? this.props.modal.buttonLeft : <button onClick={e => this.props.closeModal()}>Cancel</button>}
+                        {typeof this.props.modal.buttonLeft !== "undefined" && this.props.modal.buttonLeft !== null && this.props.modal.buttonLeft !== "" ? this.props.modal.buttonLeft : <button onClick={e => this.props.closeModal()}>Dismiss</button>}
                         {this.props.modal.buttonRight !== null ? this.props.modal.buttonRight : <button onClick={e => this.props.closeModal()}>Save</button>}
 
                     </Modal.Footer>

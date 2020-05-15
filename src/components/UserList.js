@@ -32,7 +32,7 @@ class UserList extends Component {
     render() {
         return (
             <div>
-                 <TopBar />
+                <TopBar />
                 <div className="container">
                     <div className="row">
                         <button onClick={e => this.props.history.goBack()} style={{ marginTop: 40 }}>Back</button>
