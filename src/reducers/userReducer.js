@@ -44,7 +44,7 @@ const userReducer = (state = initState, action) => {
         return {
             ...state,
             isShowAlertWrongCredentials: action.isShowAlertWrongCredentials
-        }
+        } 
     }
     else if (action.type === SET_USERS) {
         return {

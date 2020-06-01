@@ -14,7 +14,6 @@ class UserList extends Component {
     }
 
     async fetchUsers() {
-
         try {
             const response = await fetch('db.json');
             const json = await response.json();

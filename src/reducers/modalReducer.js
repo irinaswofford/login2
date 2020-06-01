@@ -48,7 +48,7 @@ const modalReducer = (state = initState, action) => {
                 onCloseModal: action.onCloseModal
             }
         }
-    }
+    } 
     else if (action.type === REMOVE_ONCLOSEMODAL) {
         return {
             ...state,
